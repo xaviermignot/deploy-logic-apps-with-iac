@@ -1,0 +1,35 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {
+        "connectionName": "azuretables"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2018-07-01-preview",
+            "name": "tableStorage",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "parameterValueSet": {
+                    "name": "managedIdentityAuth",
+                    "values": {}
+                },
+                "api": {
+                    "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/',resourceGroup().location,'/managedApis/', variables('connectionName'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "connection": {
+            "type": "object",
+            "value": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('connectionName'))]",
+                "connectionName": "[variables('connectionName')]",
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/',resourceGroup().location,'/managedApis/', variables('connectionName'))]"
+            }
+        }
+    }
+}
