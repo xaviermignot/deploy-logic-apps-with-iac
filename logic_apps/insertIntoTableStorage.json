@@ -1,0 +1,94 @@
+{
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "actions": {
+        "GeneratePartitionKey": {
+            "inputs": {
+                "variables": [
+                    {
+                        "name": "partitionKey",
+                        "type": "String",
+                        "value": "@formatDateTime(utcNow(), 'yyyy-MM-dd')"
+                    }
+                ]
+            },
+            "runAfter": {},
+            "type": "InitializeVariable"
+        },
+        "GenerateRowKey": {
+            "inputs": {
+                "variables": [
+                    {
+                        "name": "rowKey",
+                        "type": "String",
+                        "value": "@{formatDateTime(utcNow(), 'hh:mm:ss.fff')}"
+                    }
+                ]
+            },
+            "runAfter": {
+                "GeneratePartitionKey": [
+                    "Succeeded"
+                ]
+            },
+            "type": "InitializeVariable"
+        },
+        "GetClientIp": {
+            "inputs": {
+                "variables": [
+                    {
+                        "name": "clientIp",
+                        "type": "String",
+                        "value": "@{triggerOutputs()['headers']['x-ms-client-ip-address']}"
+                    }
+                ]
+            },
+            "runAfter": {},
+            "type": "InitializeVariable"
+        },
+        "InsertRowInTableStorage": {
+            "inputs": {
+                "body": {
+                    "PartitionKey": "@{variables('partitionKey')}",
+                    "RowKey": "@{variables('rowKey')}",
+                    "clientIp": "@{variables('clientIp')}"
+                },
+                "host": {
+                    "connection": {
+                        "name": "@parameters('$connections')['azuretables']['connectionId']"
+                    }
+                },
+                "method": "post",
+                "path": "/v2/storageAccounts/@{encodeURIComponent(encodeURIComponent(parameters('storageAccountName')))}/tables/@{encodeURIComponent('logicAppCalls')}/entities"
+            },
+            "runAfter": {
+                "GenerateRowKey": [
+                    "Succeeded"
+                ],
+                "GetClientIp": [
+                    "Succeeded"
+                ]
+            },
+            "type": "ApiConnection"
+        }
+    },
+    "contentVersion": "1.0.0.0",
+    "outputs": {},
+    "parameters": {
+        "$connections": {
+            "defaultValue": {},
+            "type": "Object"
+        },
+        "storageAccountName": {
+            "defaultValue": "",
+            "type": "String"
+        }
+    },
+    "triggers": {
+        "manual": {
+            "inputs": {
+                "schema": {}
+            },
+            "kind": "Http",
+            "type": "Request"
+        }
+    }
+}
