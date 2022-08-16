@@ -33,3 +33,36 @@ resource "azurerm_resource_group_template_deployment" "api_connection" {
   deployment_mode     = "Incremental"
   template_content    = file("apiConnectionArm.json")
 }
+
+resource "azurerm_logic_app_workflow" "logic_app" {
+  name                = "ala-${local.suffix}"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.location
+
+  identity {
+    type = "SystemAssigned"
+  }
+}
+
+resource "azurerm_role_assignment" "logic_app_storage_contributor" {
+  scope                = azurerm_storage_account.storage_account.id
+  principal_id         = azurerm_logic_app_workflow.logic_app.identity.0.principal_id
+  role_definition_name = "Storage Table Data Contributor"
+}
+
+resource "azurerm_resource_group_template_deployment" "logic_app" {
+  name                = "deploy-logic-app-code"
+  resource_group_name = azurerm_resource_group.rg.name
+  deployment_mode     = "Incremental"
+
+  parameters_content = jsonencode({
+    "logicAppName" = {
+      value = azurerm_logic_app_workflow.logic_app.name
+    },
+    "storageAccountName" = {
+      value = azurerm_storage_account.storage_account.name
+    }
+  })
+
+  template_content = replace(file("logicAppWorkflowArm.json"), "{}", file("../logic_apps/insertIntoTableStorage.json"))
+}
