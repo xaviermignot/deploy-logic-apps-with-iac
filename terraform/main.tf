@@ -50,6 +50,12 @@ resource "azurerm_role_assignment" "logic_app_storage_contributor" {
   role_definition_name = "Storage Table Data Contributor"
 }
 
+locals {
+  workflowStructure          = file("logicAppWorkflowArm.json")
+  definitionElementToReplace = "\"definition\": {}"
+  definitionElementReplaced  = "\"definition\": ${file("../logic_apps/insertIntoTableStorage.json")}"
+}
+
 resource "azurerm_resource_group_template_deployment" "logic_app" {
   name                = "deploy-logic-app-code"
   resource_group_name = azurerm_resource_group.rg.name
@@ -64,5 +70,5 @@ resource "azurerm_resource_group_template_deployment" "logic_app" {
     }
   })
 
-  template_content = replace(file("logicAppWorkflowArm.json"), "{}", file("../logic_apps/insertIntoTableStorage.json"))
+  template_content = replace(workflowStructure, definitionElementToReplace, definitionElementReplaced)
 }
