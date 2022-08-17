@@ -78,5 +78,6 @@ resource logicAppTableStorageRoleAssignment 'Microsoft.Authorization/roleAssignm
   properties: {
     principalId: logicApp.identity.principalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitionId)
+    principalType: 'ServicePrincipal'
   }
 }
