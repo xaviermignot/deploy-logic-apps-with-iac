@@ -6,7 +6,7 @@ param location string = deployment().location
 var suffix = 'logic-apps-iac-${uniqueString(subscription().id, location)}'
 
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: 'rg-${suffix}'
+  name: 'rg-logic-apps-bicep'
   location: location
 }
 
